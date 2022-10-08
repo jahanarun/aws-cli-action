@@ -30,3 +30,38 @@ A simple composite actions to execute aws cli command.
       ${{ env.SOURCE_PATH }} 
       s3://${{ env.BUCKET_NAME }}/${{ env.DESTINATION_PATH }}
 ```
+
+## Using output
+The action is configured with output variable named `result`. It returns the response of the AWS CLI command.
+If the response is multi-lined, it will be converted into a single line.
+```yml
+- name: 'Describe Cloudformation stack'
+  id: describe_cf
+  uses: jahanarun/aws-cli-action@v1
+  with:
+    access-key-id: ${{ env.access-key-id }}
+    secret-access-key: ${{ env.secret-access-key }}
+    default-region: ${{ env.default-region }}
+    sub-command: cloudformation 
+      describe-stacks 
+      --stack-name ${{ env.stack-name }} 
+
+- description: Just echo the output
+  run: echo '${{ steps.describe_cf.outputs.result }}'
+
+- uses: actions/github-script@v6
+  description: Parses the output of the aws-cli as a JSON
+  env:
+    DESCRIBE_CF: ${{ steps.describe_cf.outputs.result }}
+  with:
+    script: |
+      const text = process.env.DESCRIBE_CF;
+      const data = JSON.parse(text);
+
+      let outputVariables = data.Stacks[0].Outputs.reduce(
+        (obj, item) => Object.assign(obj, { [item.OutputKey]: item.OutputValue }),
+        {}
+      );
+      return outputVariables;
+
+```

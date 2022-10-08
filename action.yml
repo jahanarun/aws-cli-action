@@ -1,0 +1,44 @@
+name: "Run command AWS CLI"
+description: "Setup AWS CLI"
+branding:
+  icon: fast-forward
+  color: orange
+
+inputs:
+  access-key-id:
+    description: "AWS_ACCESS_KEY_ID"
+    required: true
+  secret-access-key:
+    description: "AWS_SECRET_ACCESS_KEY"
+    required: true
+  default-region:
+    description: "AWS_DEFAULT_REGION"
+    required: true
+  sub-command:
+    description: "The sub command with all parameters"
+    required: true
+    default: "help"
+
+outputs:
+  result:
+    description: "Output of the command"
+    value: ${{ steps.aws_cli.outputs.result }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: aws_cli
+      shell: bash
+      run: |
+        AWS_ACCESS_KEY_ID=${{ inputs.access-key-id }} \
+        AWS_SECRET_ACCESS_KEY=${{ inputs.secret-access-key }} \
+        AWS_DEFAULT_REGION=${{ inputs.default-region }} \
+        aws \
+        ${{ inputs.sub-command }} > awscli_output
+        
+        tr -d "\n" < awscli_output > single_lined_output
+        content=`cat single_lined_output`
+        echo "::set-output name=result::$(echo $content)"
+
+        rm awscli_output
+        rm single_lined_output
