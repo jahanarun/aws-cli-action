@@ -38,7 +38,7 @@ runs:
         
         tr -d "\n" < awscli_output > single_lined_output
         content=`cat single_lined_output`
-        echo "::set-output name=result::$(echo $content)"
+        echo "result=$(echo $content)" >> $GITHUB_OUTPUT
 
         rm awscli_output
         rm single_lined_output
